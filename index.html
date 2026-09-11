@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tetris Anaglífico Dicóptico — Treino de Visão Binocular</title>
+<style>
+  :root{
+    --bg-void:#05070a;
+    --bg-panel:#0e131a;
+    --bg-panel-raised:#141b24;
+    --line-hair:#232c38;
+    --text-primary:#e7ecf2;
+    --text-dim:#7b8794;
+    --eye1-default:#ff0000;
+    --eye2-default:#00ffff;
+    --neutral-grid:#ffffff;
+    --focus-ring:#5fd0ff;
+    --danger:#ff5d5d;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--bg-void);
+    color:var(--text-primary);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-user-select:none; user-select:none;
+    overflow:hidden;
+  }
+  #app{
+    position:relative;
+    width:100%; height:100vh;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .screen{
+    display:none;
+    width:100%; height:100%;
+    align-items:center; justify-content:center;
+    flex-direction:column;
+  }
+  .screen.active{display:flex;}
+
+  /* ---------- MENU ---------- */
+  .menu-wrap{
+    display:flex; flex-direction:column; align-items:center; gap:48px;
+  }
+  .menu-title{
+    text-align:center;
+  }
+  .menu-title h1{
+    margin:0;
+    font-size:clamp(28px,5vw,46px);
+    font-weight:700;
+    letter-spacing:0.5px;
+    line-height:1.15;
+  }
+  .menu-title .split-r{color:var(--eye1-default);}
+  .menu-title .split-c{color:var(--eye2-default);}
+  .menu-title p{
+    margin:10px 0 0;
+    color:var(--text-dim);
+    font-size:14px;
+    letter-spacing:0.3px;
+  }
+  .menu-buttons{
+    display:flex; flex-direction:column; gap:16px;
+    width:min(320px,80vw);
+  }
+  .menu-btn{
+    padding:16px 22px;
+    background:var(--bg-panel);
+    border:1px solid var(--line-hair);
+    border-radius:10px;
+    color:var(--text-primary);
+    font-size:17px;
+    text-align:left;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease, transform .1s ease;
+    position:relative;
+  }
+  .menu-btn .btn-sub{
+    display:block;
+    color:var(--text-dim);
+    font-size:12px;
+    margin-top:3px;
+    font-weight:400;
+  }
+  .menu-btn:hover{background:var(--bg-panel-raised);}
+  .menu-btn.focused{
+    border-color:var(--focus-ring);
+    box-shadow:0 0 0 2px rgba(95,208,255,0.18);
+  }
+  .menu-btn:active{transform:scale(0.98);}
+  .gamepad-hint{
+    color:var(--text-dim);
+    font-size:12px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .pad-dot{
+    width:8px; height:8px; border-radius:50%;
+    background:#3a4451;
+    transition:background .2s;
+  }
+  .pad-dot.on{background:#5cd85c; box-shadow:0 0 6px #5cd85c;}
+
+  /* ---------- CALIBRATION ---------- */
+  .calib-panel{
+    width:min(640px,92vw);
+    background:var(--bg-panel);
+    border:1px solid var(--line-hair);
+    border-radius:14px;
+    padding:28px clamp(18px,4vw,34px);
+    max-height:92vh;
+    overflow-y:auto;
+  }
+  .calib-panel h2{
+    margin:0 0 4px;
+    font-size:20px;
+    font-weight:700;
+  }
+  .calib-panel .calib-desc{
+    margin:0 0 24px;
+    color:var(--text-dim);
+    font-size:13px;
+    line-height:1.5;
+  }
+  .calib-row{
+    display:flex; align-items:center; gap:14px;
+    padding:14px 0;
+    border-top:1px solid var(--line-hair);
+  }
+  .calib-row:first-of-type{border-top:none;}
+  .calib-swatch{
+    width:34px; height:34px; border-radius:8px;
+    border:1px solid var(--line-hair);
+    flex:none;
+  }
+  .calib-fields{flex:1; min-width:0;}
+  .calib-label{
+    font-size:13px; font-weight:600;
+    display:flex; justify-content:space-between;
+    margin-bottom:8px;
+  }
+  .calib-label span.tag{
+    font-weight:400; color:var(--text-dim); font-size:12px;
+  }
+  .calib-controls{
+    display:flex; align-items:center; gap:12px;
+  }
+  input[type="range"]{
+    flex:1; height:4px;
+    -webkit-appearance:none; appearance:none;
+    background:var(--line-hair);
+    border-radius:2px;
+    outline:none;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:16px; height:16px; border-radius:50%;
+    background:var(--focus-ring);
+    cursor:pointer;
+    border:2px solid #05070a;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:16px; height:16px; border-radius:50%;
+    background:var(--focus-ring);
+    cursor:pointer;
+    border:2px solid #05070a;
+  }
+  .range-val{
+    width:38px; text-align:right;
+    font-variant-numeric:tabular-nums;
+    color:var(--text-dim); font-size:12px;
+  }
+  .calib-preview{
+    margin:22px 0 8px;
+    background:#000;
+    border-radius:10px;
+    border:1px solid var(--line-hair);
+    display:flex; align-items:center; justify-content:center;
+    padding:22px 10px;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .preview-block{
+    width:30px; height:30px;
+    border:none;
+  }
+  .preview-caption{
+    text-align:center;
+    color:var(--text-dim);
+    font-size:11px;
+    margin:0 0 18px;
+  }
+  .calib-actions{
+    display:flex; gap:12px; margin-top:22px;
+  }
+  .btn{
+    flex:1;
+    padding:13px 16px;
+    border-radius:9px;
+    border:1px solid var(--line-hair);
+    background:var(--bg-panel-raised);
+    color:var(--text-primary);
+    font-size:14px; font-weight:600;
+    cursor:pointer;
+  }
+  .btn.primary{
+    background:var(--focus-ring);
+    color:#04121a;
+    border-color:var(--focus-ring);
+  }
+  .btn.ghost{background:transparent;}
+  .btn:active{transform:scale(0.98);}
+  .btn.focused{box-shadow:0 0 0 2px rgba(95,208,255,0.5);}
+
+  /* ---------- GAME ---------- */
+  .game-wrap{
+    display:flex; align-items:flex-start; justify-content:center;
+    gap:22px;
+    padding:20px;
+  }
+  #board-canvas{
+    background:#000;
+    border:none;
+    border-radius:0;
+    display:block;
+  }
+  .side-panel{
+    width:170px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .panel-card{
+    background:var(--bg-panel);
+    border:1px solid var(--line-hair);
+    border-radius:10px;
+    padding:12px 14px;
+  }
+  .panel-card h3{
+    margin:0 0 6px;
+    font-size:11px;
+    letter-spacing:0.4px;
+    color:var(--text-dim);
+    font-weight:600;
+  }
+  .panel-card .val{
+    font-size:22px; font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  #next-canvas{
+    background:#000;
+    border-radius:6px;
+    display:block;
+    margin-top:2px;
+  }
+  .icon-btn{
+    width:100%;
+    padding:10px;
+    border-radius:9px;
+    border:1px solid var(--line-hair);
+    background:var(--bg-panel-raised);
+    color:var(--text-primary);
+    font-size:13px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .gear{
+    width:14px; height:14px;
+    border:2px solid currentColor;
+    border-radius:50%;
+    position:relative;
+  }
+  .pad-status{
+    font-size:11px;
+    color:var(--text-dim);
+    display:flex; align-items:center; gap:6px;
+    padding:2px 2px;
+  }
+
+  /* ---------- OVERLAYS ---------- */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(3,5,8,0.86);
+    display:none;
+    align-items:center; justify-content:center;
+    z-index:50;
+  }
+  .overlay.active{display:flex;}
+  .overlay-panel{
+    width:min(300px,86vw);
+    background:var(--bg-panel);
+    border:1px solid var(--line-hair);
+    border-radius:14px;
+    padding:26px 22px;
+    text-align:center;
+  }
+  .overlay-panel h2{margin:0 0 18px; font-size:19px;}
+  .overlay-buttons{display:flex; flex-direction:column; gap:10px;}
+  .lines-flash{
+    animation:flash .12s ease-in-out 2;
+  }
+  @keyframes flash{0%{filter:brightness(1);}50%{filter:brightness(2.4);}100%{filter:brightness(1);}}
+
+  @media (max-width:640px){
+    .game-wrap{flex-direction:column; align-items:center; padding:10px;}
+    .side-panel{width:min(300px,92vw); flex-direction:row; flex-wrap:wrap;}
+    .side-panel .panel-card{flex:1 1 42%;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ MENU SCREEN ============ -->
+  <div class="screen active" id="screen-menu">
+    <div class="menu-wrap">
+      <div class="menu-title">
+        <h1><span class="split-r">Tetris</span> <span class="split-c">Dicóptico</span></h1>
+        <p>Treino de visão binocular com óculos anaglifos</p>
+      </div>
+      <div class="menu-buttons">
+        <button class="menu-btn focused" data-action="start-game" id="btn-start">
+          Iniciar Jogo
+          <span class="btn-sub">Carrega suas cores salvas e começa a partida</span>
+        </button>
+        <button class="menu-btn" data-action="open-calib" id="btn-calib">
+          Calibrar Óculos
+          <span class="btn-sub">Ajuste as cores para o seu par de lentes</span>
+        </button>
+      </div>
+      <div class="gamepad-hint">
+        <span class="pad-dot" id="menu-pad-dot"></span>
+        <span id="menu-pad-text">Controle desconectado</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CALIBRATION SCREEN ============ -->
+  <div class="screen" id="screen-calib">
+    <div class="calib-panel">
+      <h2>Calibração dos Óculos</h2>
+      <p class="calib-desc">
+        Coloque os óculos 3D. Para calibrar o Olho 1, feche o olho esquerdo (lente vermelha)
+        e ajuste o slider até o quadrado vermelho desaparecer no fundo preto através da lente ciano.
+        Depois, para calibrar o Olho 2, feche o olho direito (lente ciano) e ajuste o slider até o
+        quadrado ciano desaparecer através da lente vermelha. O objetivo é minimizar o "vazamento"
+        da cor destinada ao outro olho; por isso o slider pode chegar a preto.
+      </p>
+
+      <div class="calib-row">
+        <div class="calib-swatch" id="swatch-eye1"></div>
+        <div class="calib-fields">
+          <div class="calib-label">Olho 1 — Peça vermelha <span class="tag">Minimizar no olho direito / ciano</span></div>
+          <div class="calib-controls">
+            <input type="range" id="slider-eye1" min="0" max="100" value="100">
+            <span class="range-val" id="val-eye1">100%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="calib-row">
+        <div class="calib-swatch" id="swatch-eye2"></div>
+        <div class="calib-fields">
+          <div class="calib-label">Olho 2 — Peça ciano <span class="tag">Minimizar no olho esquerdo / vermelho</span></div>
+          <div class="calib-controls">
+            <input type="range" id="slider-eye2" min="0" max="100" value="100">
+            <span class="range-val" id="val-eye2">100%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="calib-row">
+        <div class="calib-swatch" style="background:#888;"></div>
+        <div class="calib-fields">
+          <div class="calib-label">Brilho <span class="tag">Intensidade das peças</span></div>
+          <div class="calib-controls">
+            <input type="range" id="slider-brightness" min="10" max="100" value="100">
+            <span class="range-val" id="val-brightness">100%</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="preview-caption">Pré-visualização — teste com os óculos colocados</p>
+      <div class="calib-preview">
+        <div class="preview-block" id="preview-eye1"></div>
+        <div class="preview-block" id="preview-eye2"></div>
+        <div class="preview-block" id="preview-eye1b"></div>
+        <div class="preview-block" id="preview-eye2b"></div>
+      </div>
+
+      <div class="calib-actions">
+        <button class="btn ghost" id="btn-reset-defaults" data-action="reset-calib">Resetar Padrões</button>
+        <button class="btn primary" id="btn-save-calib" data-action="save-calib">Salvar e Voltar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ GAME SCREEN ============ -->
+  <div class="screen" id="screen-game">
+    <div class="game-wrap">
+      <canvas id="board-canvas"></canvas>
+      <div class="side-panel">
+        <div class="panel-card">
+          <h3>PONTUAÇÃO</h3>
+          <div class="val" id="stat-score">0</div>
+        </div>
+        <div class="panel-card">
+          <h3>NÍVEL</h3>
+          <div class="val" id="stat-level">1</div>
+        </div>
+        <div class="panel-card">
+          <h3>LINHAS</h3>
+          <div class="val" id="stat-lines">0</div>
+        </div>
+        <div class="panel-card">
+          <h3>PRÓXIMA</h3>
+          <canvas id="next-canvas" width="96" height="96"></canvas>
+        </div>
+        <button class="icon-btn" id="btn-pause" data-action="pause-game">
+          <span class="gear"></span> Pausar / Calibrar
+        </button>
+        <div class="pad-status">
+          <span class="pad-dot" id="game-pad-dot"></span>
+          <span id="game-pad-text">Controle desconectado</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============ PAUSE OVERLAY ============ -->
+<div class="overlay" id="overlay-pause">
+  <div class="overlay-panel">
+    <h2>Jogo Pausado</h2>
+    <div class="overlay-buttons">
+      <button class="btn primary focused" data-action="resume-game">Continuar</button>
+      <button class="btn" data-action="pause-open-calib">Calibrar Óculos</button>
+      <button class="btn ghost" data-action="quit-to-menu">Sair para o Menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ GAME OVER OVERLAY ============ -->
+<div class="overlay" id="overlay-gameover">
+  <div class="overlay-panel">
+    <h2>Fim de Jogo</h2>
+    <p style="color:var(--text-dim); margin-top:-10px; font-size:13px;" id="gameover-summary"></p>
+    <div class="overlay-buttons">
+      <button class="btn primary focused" data-action="restart-game">Jogar Novamente</button>
+      <button class="btn ghost" data-action="quit-to-menu">Menu Principal</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     STORAGE — persist calibration in localStorage
+     ============================================================ */
+  const STORAGE_KEY = "dichopticTetris.calibration.v3";
+  const DEFAULT_CALIB = {
+    eye1Gain: 100,    // 0-100 % -> R channel. 0 can become true black.
+    eye2Gain: 100,    // 0-100 % -> G/B channels together. 0 can become true black.
+    brightness: 100   // 10-100 %, global intensity of the dichoptic pieces.
+  };
+
+  const CHANNEL_CEIL = 0xFF;
+
+  function gainToChannel(pct){
+    const f = Math.max(0, Math.min(100, pct)) / 100;
+    return Math.round(CHANNEL_CEIL * f);
+  }
+
+  function loadCalibration(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return Object.assign({}, DEFAULT_CALIB);
+      const parsed = JSON.parse(raw);
+      return Object.assign({}, DEFAULT_CALIB, parsed);
+    }catch(e){
+      return Object.assign({}, DEFAULT_CALIB);
+    }
+  }
+
+  function saveCalibration(calib){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(calib));
+      return true;
+    }catch(e){
+      return false;
+    }
+  }
+
+  /* ============================================================
+     COLOR HELPERS
+     ============================================================ */
+  function rgbToCss(r,g,b,a){
+    a = (a===undefined) ? 1 : a;
+    return "rgba(" + Math.round(r) + "," + Math.round(g) + "," + Math.round(b) + "," + a + ")";
+  }
+
+  /* ============================================================
+     GLOBAL STATE
+     ============================================================ */
+  let calib = loadCalibration();
+  let activeCalibContext = "menu"; // "menu" | "pause" — where "back" should return to
+
+  // Pure dichoptic colors. The calibration gain spans 0..255 so the
+  // test square can actually blend into the black background.
+  function currentEye1Color(){
+    const r = gainToChannel(calib.eye1Gain);
+    const alpha = Math.max(0.1, Math.min(1, calib.brightness / 100));
+    return rgbToCss(r, 0, 0, alpha);
+  }
+
+  function currentEye2Color(){
+    const gb = gainToChannel(calib.eye2Gain);
+    const alpha = Math.max(0.1, Math.min(1, calib.brightness / 100));
+    return rgbToCss(0, gb, gb, alpha);
+  }
+  const NEUTRAL_GRID = "#ffffff";
+
+  /* ============================================================
+     SCREEN MANAGEMENT
+     ============================================================ */
+  const screens = {
+    menu: document.getElementById("screen-menu"),
+    calib: document.getElementById("screen-calib"),
+    game: document.getElementById("screen-game")
+  };
+  function showScreen(name){
+    Object.keys(screens).forEach(k => screens[k].classList.toggle("active", k===name));
+  }
+  const overlayPause = document.getElementById("overlay-pause");
+  const overlayGameOver = document.getElementById("overlay-gameover");
+  function setOverlay(el, on){ el.classList.toggle("active", !!on); }
+
+  /* ============================================================
+     FOCUS / NAVIGATION HELPERS (menu + overlays, keyboard & gamepad)
+     ============================================================ */
+  function getFocusableIn(container){
+    return Array.from(container.querySelectorAll(".menu-btn, .btn"));
+  }
+  function focusFirst(container){
+    const items = getFocusableIn(container);
+    items.forEach(i=>i.classList.remove("focused"));
+    if(items[0]) items[0].classList.add("focused");
+  }
+  function moveFocus(container, dir){
+    const items = getFocusableIn(container);
+    if(!items.length) return;
+    let idx = items.findIndex(i=>i.classList.contains("focused"));
+    if(idx === -1) idx = 0;
+    items[idx].classList.remove("focused");
+    idx = (idx + dir + items.length) % items.length;
+    items[idx].classList.add("focused");
+  }
+  function activateFocused(container){
+    const items = getFocusableIn(container);
+    const el = items.find(i=>i.classList.contains("focused"));
+    if(el) el.click();
+  }
+  function currentInteractiveContainer(){
+    if(overlayGameOver.classList.contains("active")) return overlayGameOver.querySelector(".overlay-panel");
+    if(overlayPause.classList.contains("active")) return overlayPause.querySelector(".overlay-panel");
+    if(screens.menu.classList.contains("active")) return screens.menu;
+    if(screens.calib.classList.contains("active")) return screens.calib.querySelector(".calib-panel");
+    return null;
+  }
+
+  /* ============================================================
+     ACTION ROUTER — every clickable control has data-action
+     ============================================================ */
+  document.addEventListener("click", function(ev){
+    const btn = ev.target.closest("[data-action]");
+    if(!btn) return;
+    handleAction(btn.dataset.action);
+  });
+
+  function handleAction(action){
+    switch(action){
+      case "start-game":
+        calib = loadCalibration();
+        showScreen("game");
+        Game.start();
+        break;
+      case "open-calib":
+        activeCalibContext = "menu";
+        openCalibScreen();
+        break;
+      case "pause-open-calib":
+        activeCalibContext = "pause";
+        setOverlay(overlayPause, false);
+        openCalibScreen();
+        break;
+      case "save-calib":
+        readCalibFormIntoState();
+        saveCalibration(calib);
+        if(activeCalibContext === "pause"){
+          showScreen("game");
+          setOverlay(overlayPause, true);
+          focusFirst(overlayPause.querySelector(".overlay-panel"));
+        } else {
+          showScreen("menu");
+          focusFirst(screens.menu);
+        }
+        break;
+      case "reset-calib":
+        calib = Object.assign({}, DEFAULT_CALIB);
+        populateCalibForm();
+        break;
+      case "pause-game":
+        Game.pause();
+        setOverlay(overlayPause, true);
+        focusFirst(overlayPause.querySelector(".overlay-panel"));
+        break;
+      case "resume-game":
+        setOverlay(overlayPause, false);
+        Game.resume();
+        break;
+      case "quit-to-menu":
+        setOverlay(overlayPause, false);
+        setOverlay(overlayGameOver, false);
+        Game.stop();
+        showScreen("menu");
+        focusFirst(screens.menu);
+        break;
+      case "restart-game":
+        setOverlay(overlayGameOver, false);
+        showScreen("game");
+        Game.start();
+        break;
+    }
+  }
+
+  function openCalibScreen(){
+    populateCalibForm();
+    showScreen("calib");
+    focusFirst(screens.calib.querySelector(".calib-panel"));
+  }
+
+  /* ============================================================
+     CALIBRATION FORM WIRING
+     ============================================================ */
+  const el = {
+    sliderEye1: document.getElementById("slider-eye1"),
+    valEye1: document.getElementById("val-eye1"),
+    swatchEye1: document.getElementById("swatch-eye1"),
+    sliderEye2: document.getElementById("slider-eye2"),
+    valEye2: document.getElementById("val-eye2"),
+    swatchEye2: document.getElementById("swatch-eye2"),
+    sliderBrightness: document.getElementById("slider-brightness"),
+    valBrightness: document.getElementById("val-brightness"),
+    previewEye1: document.getElementById("preview-eye1"),
+    previewEye2: document.getElementById("preview-eye2"),
+    previewEye1b: document.getElementById("preview-eye1b"),
+    previewEye2b: document.getElementById("preview-eye2b")
+  };
+
+  function populateCalibForm(){
+    el.sliderEye1.value = calib.eye1Gain;
+    el.sliderEye2.value = calib.eye2Gain;
+    el.sliderBrightness.value = calib.brightness;
+    refreshCalibPreview();
+  }
+
+  function readCalibFormIntoState(){
+    calib.eye1Gain = parseInt(el.sliderEye1.value, 10);
+    calib.eye2Gain = parseInt(el.sliderEye2.value, 10);
+    calib.brightness = parseInt(el.sliderBrightness.value, 10);
+  }
+
+  function refreshCalibPreview(){
+    readCalibFormIntoState();
+    el.valEye1.textContent = calib.eye1Gain + "%";
+    el.valEye2.textContent = calib.eye2Gain + "%";
+    el.valBrightness.textContent = calib.brightness + "%";
+    const c1 = currentEye1Color();
+    const c2 = currentEye2Color();
+    el.swatchEye1.style.background = c1;
+    el.swatchEye2.style.background = c2;
+    el.previewEye1.style.background = c1;
+    el.previewEye1b.style.background = c1;
+    el.previewEye2.style.background = c2;
+    el.previewEye2b.style.background = c2;
+    if(Game.isRunning()) Game.renderOnly();
+  }
+
+  [el.sliderEye1, el.sliderEye2, el.sliderBrightness]
+    .forEach(input => input.addEventListener("input", refreshCalibPreview));
+
+  /* ============================================================
+     TETROMINO DEFINITIONS
+     ============================================================ */
+  const SHAPES = {
+    I: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+    O: [[1,1],[1,1]],
+    T: [[0,1,0],[1,1,1],[0,0,0]],
+    S: [[0,1,1],[1,1,0],[0,0,0]],
+    Z: [[1,1,0],[0,1,1],[0,0,0]],
+    J: [[1,0,0],[1,1,1],[0,0,0]],
+    L: [[0,0,1],[1,1,1],[0,0,0]]
+  };
+  const PIECE_KEYS = Object.keys(SHAPES);
+
+  function rotateMatrixCW(m){
+    const n = m.length;
+    const res = [];
+    for(let i=0;i<n;i++) res.push(new Array(n).fill(0));
+    for(let r=0;r<n;r++){
+      for(let c=0;c<n;c++){
+        res[c][n-1-r] = m[r][c];
+      }
+    }
+    return res;
+  }
+
+  function randomPieceKey(){
+    return PIECE_KEYS[Math.floor(Math.random()*PIECE_KEYS.length)];
+  }
+
+  function makePiece(key){
+    return {
+      key: key,
+      matrix: SHAPES[key].map(row => row.slice()),
+      row: 0,
+      col: 0
+    };
+  }
+
+  /* ============================================================
+     GAME — board logic, rendering, loop
+     ============================================================ */
+  const COLS = 10, ROWS = 20;
+  const CELL = 28; // px per cell, scaled responsively below
+
+  const Game = (function(){
+    let canvas, ctx, nextCanvas, nextCtx;
+    let board;             // ROWS x COLS of 0/1 (locked cells)
+    let current, next;
+    let score, level, lines;
+    let dropTimer, dropInterval;
+    let running = false, paused = false;
+    let lastTime = 0;
+    let rafId = null;
+    let cellSize = CELL;
+
+    function init(){
+      canvas = document.getElementById("board-canvas");
+      ctx = canvas.getContext("2d");
+      nextCanvas = document.getElementById("next-canvas");
+      nextCtx = nextCanvas.getContext("2d");
+      resizeCanvas();
+      window.addEventListener("resize", resizeCanvas);
+    }
+
+    function resizeCanvas(){
+      const maxH = window.innerHeight - 40;
+      const maxW = Math.min(window.innerWidth - 220, window.innerWidth * 0.62);
+      cellSize = Math.max(14, Math.floor(Math.min(maxH / ROWS, maxW / COLS)));
+      canvas.width = cellSize * COLS;
+      canvas.height = cellSize * ROWS;
+      if(running) draw();
+    }
+
+    function emptyBoard(){
+      const b = [];
+      for(let r=0;r<ROWS;r++) b.push(new Array(COLS).fill(0));
+      return b;
+    }
+
+    function start(){
+      board = emptyBoard();
+      score = 0; level = 1; lines = 0;
+      dropInterval = 1000;
+      dropTimer = 0;
+      lastTime = 0;
+      next = makePiece(randomPieceKey());
+      spawnPiece();
+      updateStats();
+      running = true; paused = false;
+      resizeCanvas();
+      if(rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function stop(){
+      running = false; paused = false;
+      if(rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    function pause(){ paused = true; }
+    function resume(){
+      if(!running) return;
+      paused = false;
+      lastTime = 0;
+      if(!rafId) rafId = requestAnimationFrame(loop);
+    }
+    function isRunning(){ return running && !paused; }
+
+    function spawnPiece(){
+      current = next;
+      next = makePiece(randomPieceKey());
+      current.row = 0;
+      current.col = Math.floor((COLS - current.matrix[0].length) / 2);
+      if(collides(current, 0, 0)){
+        gameOver();
+      }
+      drawNext();
+    }
+
+    function collides(piece, dRow, dCol, matrix){
+      const m = matrix || piece.matrix;
+      for(let r=0;r<m.length;r++){
+        for(let c=0;c<m[r].length;c++){
+          if(!m[r][c]) continue;
+          const nr = piece.row + r + dRow;
+          const nc = piece.col + c + dCol;
+          if(nc < 0 || nc >= COLS || nr >= ROWS) return true;
+          if(nr >= 0 && board[nr][nc]) return true;
+        }
+      }
+      return false;
+    }
+
+    function move(dCol){
+      if(!isRunning()) return;
+      if(!collides(current, 0, dCol)){
+        current.col += dCol;
+      }
+    }
+
+    function softDrop(){
+      if(!isRunning()) return;
+      if(!collides(current, 1, 0)){
+        current.row += 1;
+        score += 1;
+        updateStats();
+      } else {
+        lockPiece();
+      }
+      dropTimer = 0;
+    }
+
+    function hardDrop(){
+      if(!isRunning()) return;
+      let dist = 0;
+      while(!collides(current, dist+1, 0)) dist++;
+      current.row += dist;
+      score += dist * 2;
+      updateStats();
+      lockPiece();
+      dropTimer = 0;
+    }
+
+    function rotate(){
+      if(!isRunning()) return;
+      const rotated = rotateMatrixCW(current.matrix);
+      const kicks = [0, -1, 1, -2, 2];
+      for(let i=0;i<kicks.length;i++){
+        if(!collides(current, 0, kicks[i], rotated)){
+          current.matrix = rotated;
+          current.col += kicks[i];
+          return;
+        }
+      }
+      // no valid position found; rotation is skipped
+    }
+
+    function lockPiece(){
+      const m = current.matrix;
+      for(let r=0;r<m.length;r++){
+        for(let c=0;c<m[r].length;c++){
+          if(!m[r][c]) continue;
+          const br = current.row + r, bc = current.col + c;
+          if(br >= 0 && br < ROWS && bc >= 0 && bc < COLS) board[br][bc] = 1;
+        }
+      }
+      clearLines();
+      spawnPiece();
+    }
+
+    function clearLines(){
+      let cleared = 0;
+      for(let r=ROWS-1;r>=0;r--){
+        if(board[r].every(cell => cell)){
+          board.splice(r,1);
+          board.unshift(new Array(COLS).fill(0));
+          cleared++;
+          r++; // re-check same index after shift
+        }
+      }
+      if(cleared > 0){
+        const points = [0,100,300,500,800][cleared] || 800;
+        score += points * level;
+        lines += cleared;
+        level = 1 + Math.floor(lines / 10);
+        dropInterval = Math.max(120, 1000 - (level-1)*75);
+        updateStats();
+        flashBoard();
+      }
+    }
+
+    function flashBoard(){
+      canvas.classList.remove("lines-flash");
+      void canvas.offsetWidth;
+      canvas.classList.add("lines-flash");
+    }
+
+    function updateStats(){
+      document.getElementById("stat-score").textContent = score;
+      document.getElementById("stat-level").textContent = level;
+      document.getElementById("stat-lines").textContent = lines;
+    }
+
+    function gameOver(){
+      stop();
+      document.getElementById("gameover-summary").textContent =
+        "Pontuação: " + score + " · Nível: " + level + " · Linhas: " + lines;
+      setOverlay(document.getElementById("overlay-gameover"), true);
+      focusFirst(document.getElementById("overlay-gameover").querySelector(".overlay-panel"));
+    }
+
+    /* ---------------- rendering ---------------- */
+    function draw(){
+      ctx.clearRect(0,0,canvas.width, canvas.height);
+
+      // locked pieces — Eye 2 color
+      const eye2 = currentEye2Color();
+      for(let r=0;r<ROWS;r++){
+        for(let c=0;c<COLS;c++){
+          if(board[r][c]) drawCell(c, r, eye2);
+        }
+      }
+
+      // falling piece — Eye 1 color
+      if(current){
+        const eye1 = currentEye1Color();
+        const m = current.matrix;
+        for(let r=0;r<m.length;r++){
+          for(let c=0;c<m[r].length;c++){
+            if(!m[r][c]) continue;
+            const br = current.row + r, bc = current.col + c;
+            if(br >= 0) drawCell(bc, br, eye1);
+          }
+        }
+      }
+
+    }
+
+    function drawCell(col, row, color){
+      // IMPORTANT: no neutral/white border. A border would be visible to both
+      // eyes and would defeat the dichoptic separation.
+      ctx.fillStyle = color;
+      ctx.fillRect(col*cellSize, row*cellSize, cellSize, cellSize);
+    }
+
+    function drawNext(){
+      nextCtx.clearRect(0,0,nextCanvas.width, nextCanvas.height);
+      if(!next) return;
+      const m = next.matrix;
+      const size = m.length;
+      const cs = Math.floor(Math.min(nextCanvas.width, nextCanvas.height) / (size+1));
+      const offsetX = (nextCanvas.width - cs*size)/2;
+      const offsetY = (nextCanvas.height - cs*size)/2;
+      const color = currentEye1Color();
+      for(let r=0;r<size;r++){
+        for(let c=0;c<size;c++){
+          if(!m[r][c]) continue;
+          nextCtx.fillStyle = color;
+          nextCtx.fillRect(offsetX+c*cs, offsetY+r*cs, cs, cs);
+        }
+      }
+    }
+
+    function renderOnly(){
+      if(canvas) draw();
+      drawNext();
+    }
+
+    /* ---------------- main loop ---------------- */
+    function loop(ts){
+      if(!running || paused){ rafId = null; return; }
+      if(!lastTime) lastTime = ts;
+      const dt = ts - lastTime;
+      lastTime = ts;
+
+      dropTimer += dt;
+      if(dropTimer >= dropInterval){
+        dropTimer = 0;
+        if(!collides(current, 1, 0)){
+          current.row += 1;
+        } else {
+          lockPiece();
+        }
+      }
+
+      GamepadInput.poll();
+      draw();
+      rafId = requestAnimationFrame(loop);
+    }
+
+    return {
+      init, start, stop, pause, resume, isRunning,
+      move, softDrop, hardDrop, rotate,
+      renderOnly
+    };
+  })();
+
+  /* ============================================================
+     KEYBOARD INPUT
+     ============================================================ */
+  document.addEventListener("keydown", function(ev){
+    const overlayOpen = overlayPause.classList.contains("active") || overlayGameOver.classList.contains("active");
+    const onMenu = screens.menu.classList.contains("active");
+    const onCalib = screens.calib.classList.contains("active");
+    const onGame = screens.game.classList.contains("active") && !overlayOpen;
+
+    if(onGame && Game.isRunning()){
+      switch(ev.key){
+        case "ArrowLeft": Game.move(-1); ev.preventDefault(); return;
+        case "ArrowRight": Game.move(1); ev.preventDefault(); return;
+        case "ArrowDown": Game.softDrop(); ev.preventDefault(); return;
+        case "ArrowUp": case " ": Game.rotate(); ev.preventDefault(); return;
+        case "p": case "P": case "Escape":
+          Game.pause();
+          setOverlay(overlayPause, true);
+          focusFirst(overlayPause.querySelector(".overlay-panel"));
+          ev.preventDefault();
+          return;
+      }
+      return;
+    }
+
+    // navigation contexts: menu / calib / overlays
+    const container = currentInteractiveContainer();
+    if(!container) return;
+    switch(ev.key){
+      case "ArrowDown": case "ArrowRight":
+        moveFocus(container, 1); ev.preventDefault(); break;
+      case "ArrowUp": case "ArrowLeft":
+        moveFocus(container, -1); ev.preventDefault(); break;
+      case "Enter":
+        activateFocused(container); ev.preventDefault(); break;
+      case "Escape": case "p": case "P":
+        if(overlayPause.classList.contains("active")){
+          setOverlay(overlayPause, false);
+          Game.resume();
+        } else if(onCalib){
+          handleAction(activeCalibContext === "pause" ? "save-calib" : "save-calib");
+        }
+        ev.preventDefault();
+        break;
+    }
+  });
+
+  /* ============================================================
+     GAMEPAD INPUT (Bluetooth controllers via Gamepad API)
+     ============================================================ */
+  const GamepadInput = (function(){
+    let connected = false;
+    const cooldowns = {}; // action -> last timestamp
+    const COOLDOWN_MS = 130;
+    const AXIS_THRESHOLD = 0.5;
+
+    window.addEventListener("gamepadconnected", function(e){
+      connected = true;
+      updateIndicators();
+    });
+    window.addEventListener("gamepaddisconnected", function(e){
+      connected = false;
+      updateIndicators();
+    });
+
+    function updateIndicators(){
+      const dots = [document.getElementById("menu-pad-dot"), document.getElementById("game-pad-dot")];
+      const texts = [document.getElementById("menu-pad-text"), document.getElementById("game-pad-text")];
+      dots.forEach(d => d && d.classList.toggle("on", connected));
+      texts.forEach(t => t && (t.textContent = connected ? "Controle conectado" : "Controle desconectado"));
+    }
+
+    function ready(action){
+      const now = performance.now();
+      if(!cooldowns[action] || now - cooldowns[action] >= COOLDOWN_MS){
+        cooldowns[action] = now;
+        return true;
+      }
+      return false;
+    }
+
+    function getPad(){
+      const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+      for(let i=0;i<pads.length;i++){ if(pads[i]) return pads[i]; }
+      return null;
+    }
+
+    function poll(){
+      const pad = getPad();
+      const wasConnected = connected;
+      connected = !!pad;
+      if(connected !== wasConnected) updateIndicators();
+      if(!pad) return;
+
+      const btn = idx => pad.buttons[idx] && pad.buttons[idx].pressed;
+      const axisX = pad.axes[0] || 0;
+      const axisY = pad.axes[1] || 0;
+      const dpadLeft = btn(14) || axisX < -AXIS_THRESHOLD;
+      const dpadRight = btn(15) || axisX > AXIS_THRESHOLD;
+      const dpadDown = btn(13) || axisY > AXIS_THRESHOLD;
+      const dpadUp = btn(12) || axisY < -AXIS_THRESHOLD;
+      const confirm = btn(0); // A / X
+      const startBtn = btn(9);
+
+      const overlayOpen = overlayPause.classList.contains("active") || overlayGameOver.classList.contains("active");
+      const onGamePlaying = screens.game.classList.contains("active") && !overlayOpen && Game.isRunning();
+
+      if(onGamePlaying){
+        if(dpadLeft && ready("left")) Game.move(-1);
+        if(dpadRight && ready("right")) Game.move(1);
+        if(dpadDown && ready("down")) Game.softDrop();
+        if(confirm && ready("rotate")) Game.rotate();
+        if(startBtn && ready("start")){
+          Game.pause();
+          setOverlay(overlayPause, true);
+          focusFirst(overlayPause.querySelector(".overlay-panel"));
+        }
+      } else {
+        const container = currentInteractiveContainer();
+        if(container){
+          if(dpadDown && ready("navdown")) moveFocus(container, 1);
+          if(dpadUp && ready("navup")) moveFocus(container, -1);
+          if(confirm && ready("navconfirm")) activateFocused(container);
+        }
+        if(startBtn && ready("start") && overlayPause.classList.contains("active")){
+          setOverlay(overlayPause, false);
+          Game.resume();
+        }
+      }
+    }
+
+    return { poll };
+  })();
+
+  /* ============================================================
+     BOOTSTRAP
+     ============================================================ */
+  Game.init();
+  populateCalibForm();
+  focusFirst(screens.menu);
+
+})();
+</script>
+</body>
+</html>
