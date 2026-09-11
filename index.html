@@ -213,6 +213,10 @@
   .btn.ghost{background:transparent;}
   .btn:active{transform:scale(0.98);}
   .btn.focused{box-shadow:0 0 0 2px rgba(95,208,255,0.5);}
+  input[type="range"].focused{
+    outline:2px solid rgba(95,208,255,0.7);
+    outline-offset:6px;
+  }
 
   /* ---------- GAME ---------- */
   .game-wrap{
@@ -222,7 +226,8 @@
   }
   #board-canvas{
     background:#000;
-    border:none;
+    /* Neutral frame: only the board boundary is visible to both eyes. */
+    border:2px solid rgba(255,255,255,0.55);
     border-radius:0;
     display:block;
   }
@@ -391,6 +396,7 @@
 
       <div class="calib-actions">
         <button class="btn ghost" id="btn-reset-defaults" data-action="reset-calib">Resetar Padrões</button>
+        <button class="btn ghost" id="btn-back-calib" data-action="back-calib">Voltar sem Salvar</button>
         <button class="btn primary" id="btn-save-calib" data-action="save-calib">Salvar e Voltar</button>
       </div>
     </div>
@@ -543,7 +549,7 @@
      FOCUS / NAVIGATION HELPERS (menu + overlays, keyboard & gamepad)
      ============================================================ */
   function getFocusableIn(container){
-    return Array.from(container.querySelectorAll(".menu-btn, .btn"));
+    return Array.from(container.querySelectorAll(".menu-btn, .btn, input[type=\"range\"]"));
   }
   function focusFirst(container){
     const items = getFocusableIn(container);
@@ -600,14 +606,10 @@
       case "save-calib":
         readCalibFormIntoState();
         saveCalibration(calib);
-        if(activeCalibContext === "pause"){
-          showScreen("game");
-          setOverlay(overlayPause, true);
-          focusFirst(overlayPause.querySelector(".overlay-panel"));
-        } else {
-          showScreen("menu");
-          focusFirst(screens.menu);
-        }
+        returnFromCalibration();
+        break;
+      case "back-calib":
+        returnFromCalibration();
         break;
       case "reset-calib":
         calib = Object.assign({}, DEFAULT_CALIB);
@@ -641,6 +643,18 @@
     populateCalibForm();
     showScreen("calib");
     focusFirst(screens.calib.querySelector(".calib-panel"));
+  }
+
+  function returnFromCalibration(){
+    if(activeCalibContext === "pause"){
+      showScreen("game");
+      setOverlay(overlayPause, true);
+      focusFirst(overlayPause.querySelector(".overlay-panel"));
+    } else {
+      setOverlay(overlayPause, false);
+      showScreen("menu");
+      focusFirst(screens.menu);
+    }
   }
 
   /* ============================================================
@@ -1000,7 +1014,6 @@
         }
       }
 
-      GamepadInput.poll();
       draw();
       rafId = requestAnimationFrame(loop);
     }
@@ -1052,7 +1065,7 @@
           setOverlay(overlayPause, false);
           Game.resume();
         } else if(onCalib){
-          handleAction(activeCalibContext === "pause" ? "save-calib" : "save-calib");
+          handleAction("back-calib");
         }
         ev.preventDefault();
         break;
@@ -1064,16 +1077,19 @@
      ============================================================ */
   const GamepadInput = (function(){
     let connected = false;
-    const cooldowns = {}; // action -> last timestamp
-    const COOLDOWN_MS = 130;
+    const cooldowns = {};
+    const COOLDOWN_MS = 140;
     const AXIS_THRESHOLD = 0.5;
+    let prevButtons = [];
+    let pollRaf = null;
 
-    window.addEventListener("gamepadconnected", function(e){
+    window.addEventListener("gamepadconnected", function(){
       connected = true;
       updateIndicators();
     });
-    window.addEventListener("gamepaddisconnected", function(e){
+    window.addEventListener("gamepaddisconnected", function(){
       connected = false;
+      prevButtons = [];
       updateIndicators();
     });
 
@@ -1099,51 +1115,108 @@
       return null;
     }
 
+    function justPressed(pad, idx){
+      const nowPressed = !!(pad.buttons[idx] && pad.buttons[idx].pressed);
+      const wasPressed = !!prevButtons[idx];
+      return nowPressed && !wasPressed;
+    }
+
+    function adjustFocusedSlider(container, delta){
+      const items = getFocusableIn(container);
+      const focused = items.find(i => i.classList.contains("focused"));
+      if(!focused || focused.type !== "range") return false;
+      const min = Number(focused.min || 0);
+      const max = Number(focused.max || 100);
+      const step = Number(focused.step || 1);
+      const value = Math.max(min, Math.min(max, Number(focused.value) + delta * step));
+      if(value !== Number(focused.value)){
+        focused.value = value;
+        focused.dispatchEvent(new Event("input", {bubbles:true}));
+      }
+      return true;
+    }
+
     function poll(){
       const pad = getPad();
       const wasConnected = connected;
       connected = !!pad;
       if(connected !== wasConnected) updateIndicators();
-      if(!pad) return;
 
-      const btn = idx => pad.buttons[idx] && pad.buttons[idx].pressed;
+      if(!pad){
+        prevButtons = [];
+        pollRaf = requestAnimationFrame(poll);
+        return;
+      }
+
+      const btn = idx => !!(pad.buttons[idx] && pad.buttons[idx].pressed);
       const axisX = pad.axes[0] || 0;
       const axisY = pad.axes[1] || 0;
       const dpadLeft = btn(14) || axisX < -AXIS_THRESHOLD;
       const dpadRight = btn(15) || axisX > AXIS_THRESHOLD;
       const dpadDown = btn(13) || axisY > AXIS_THRESHOLD;
       const dpadUp = btn(12) || axisY < -AXIS_THRESHOLD;
-      const confirm = btn(0); // A / X
-      const startBtn = btn(9);
+      const confirmPressed = justPressed(pad, 0);
+      const backPressed = justPressed(pad, 1);
+      const startPressed = justPressed(pad, 9);
 
-      const overlayOpen = overlayPause.classList.contains("active") || overlayGameOver.classList.contains("active");
-      const onGamePlaying = screens.game.classList.contains("active") && !overlayOpen && Game.isRunning();
+      const overlayPauseOpen = overlayPause.classList.contains("active");
+      const overlayGameOverOpen = overlayGameOver.classList.contains("active");
+      const onGamePlaying = screens.game.classList.contains("active") && !overlayPauseOpen && !overlayGameOverOpen && Game.isRunning();
+      const onCalib = screens.calib.classList.contains("active");
 
       if(onGamePlaying){
         if(dpadLeft && ready("left")) Game.move(-1);
         if(dpadRight && ready("right")) Game.move(1);
         if(dpadDown && ready("down")) Game.softDrop();
-        if(confirm && ready("rotate")) Game.rotate();
-        if(startBtn && ready("start")){
-          Game.pause();
-          setOverlay(overlayPause, true);
-          focusFirst(overlayPause.querySelector(".overlay-panel"));
+        if(confirmPressed) Game.rotate();
+        if(startPressed){
+          handleAction("pause-game");
+        }
+      } else if(onCalib){
+        const container = currentInteractiveContainer();
+        if(container){
+          const horizontalOnSlider = adjustFocusedSlider(container, dpadRight ? 1 : dpadLeft ? -1 : 0);
+          if(!horizontalOnSlider){
+            if(dpadDown && ready("navdown")) moveFocus(container, 1);
+            if(dpadUp && ready("navup")) moveFocus(container, -1);
+          }
+          if(confirmPressed){
+            const focused = getFocusableIn(container).find(i => i.classList.contains("focused"));
+            if(focused && focused.matches("input[type=range]")){
+              // A on a slider is intentionally a no-op; use left/right to adjust.
+            } else {
+              activateFocused(container);
+            }
+          }
+          if(backPressed) handleAction("back-calib");
         }
       } else {
         const container = currentInteractiveContainer();
         if(container){
           if(dpadDown && ready("navdown")) moveFocus(container, 1);
           if(dpadUp && ready("navup")) moveFocus(container, -1);
-          if(confirm && ready("navconfirm")) activateFocused(container);
+          if(confirmPressed) activateFocused(container);
         }
-        if(startBtn && ready("start") && overlayPause.classList.contains("active")){
-          setOverlay(overlayPause, false);
-          Game.resume();
+        if(startPressed && overlayPauseOpen){
+          handleAction("resume-game");
+        } else if(backPressed){
+          if(overlayPauseOpen){
+            handleAction("quit-to-menu");
+          } else if(overlayGameOverOpen){
+            handleAction("quit-to-menu");
+          }
         }
       }
+
+      prevButtons = pad.buttons.map(b => !!b.pressed);
+      pollRaf = requestAnimationFrame(poll);
     }
 
-    return { poll };
+    function start(){
+      if(!pollRaf) pollRaf = requestAnimationFrame(poll);
+    }
+
+    return { poll, start };
   })();
 
   /* ============================================================
@@ -1152,6 +1225,7 @@
   Game.init();
   populateCalibForm();
   focusFirst(screens.menu);
+  GamepadInput.start();
 
 })();
 </script>
