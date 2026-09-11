@@ -1122,6 +1122,9 @@
     }
 
     function adjustFocusedSlider(container, delta){
+      // Only handle horizontal input here. With delta === 0 (e.g. Arrow Down),
+      // return false so the caller can move focus to the next component.
+      if(delta === 0) return false;
       const items = getFocusableIn(container);
       const focused = items.find(i => i.classList.contains("focused"));
       if(!focused || focused.type !== "range") return false;
