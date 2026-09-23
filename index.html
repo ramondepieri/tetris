@@ -356,7 +356,7 @@
       <div class="calib-row">
         <div class="calib-swatch" id="swatch-eye1"></div>
         <div class="calib-fields">
-          <div class="calib-label">Olho 1 — Peça vermelha <span class="tag">Minimizar no olho direito / ciano</span></div>
+          <div class="calib-label">Olho 1 — Peça ciano <span class="tag">Minimizar no olho direito / ciano</span></div>
           <div class="calib-controls">
             <input type="range" id="slider-eye1" min="0" max="100" value="100">
             <span class="range-val" id="val-eye1">100%</span>
@@ -367,7 +367,7 @@
       <div class="calib-row">
         <div class="calib-swatch" id="swatch-eye2"></div>
         <div class="calib-fields">
-          <div class="calib-label">Olho 2 — Peça ciano <span class="tag">Minimizar no olho esquerdo / vermelho</span></div>
+          <div class="calib-label">Olho 2 — Peça vermelha <span class="tag">Minimizar no olho esquerdo / vermelho</span></div>
           <div class="calib-controls">
             <input type="range" id="slider-eye2" min="0" max="100" value="100">
             <span class="range-val" id="val-eye2">100%</span>
@@ -517,15 +517,17 @@
 
   // Pure dichoptic colors. The calibration gain spans 0..255 so the
   // test square can actually blend into the black background.
-function currentEye1Color(){
-  const alpha = Math.max(0.1, Math.min(1, calib.brightness / 100));
-  return rgbToCss(0, 0, 255, alpha);
-}
-
-function currentEye2Color(){
-  const alpha = Math.max(0.1, Math.min(1, calib.brightness / 100));
-  return rgbToCss(35, 0, 0, alpha);
-}
+  function currentEye1Color(){
+    const b = gainToChannel(calib.eye1Gain);
+    const alpha = Math.max(0.1, Math.min(1, calib.brightness / 100));
+    return rgbToCss(0, 0, b, alpha);
+  }
+  
+  function currentEye2Color(){
+    const r = Math.round(35 * Math.max(0, Math.min(100, calib.eye2Gain)) / 100);
+    const alpha = Math.max(0.1, Math.min(1, calib.brightness / 100));
+    return rgbToCss(r, 0, 0, alpha);
+  }
   const NEUTRAL_GRID = "#ffffff";
 
   /* ============================================================
