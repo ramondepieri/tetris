@@ -517,17 +517,19 @@
 
   // Pure dichoptic colors. The calibration gain spans 0..255 so the
   // test square can actually blend into the black background.
-  function currentEye1Color(){
-    const b = gainToChannel(calib.eye1Gain);
-    const alpha = Math.max(0.1, Math.min(1, calib.brightness / 100));
-    return rgbToCss(0, 0, b, alpha);
-  }
-  
-  function currentEye2Color(){
-    const r = Math.round(35 * Math.max(0, Math.min(100, calib.eye2Gain)) / 100);
-    const alpha = Math.max(0.1, Math.min(1, calib.brightness / 100));
-    return rgbToCss(r, 0, 0, alpha);
-  }
+function currentEye1Color(){
+  const intensity = calib.eye1Gain / 100;
+  const b = Math.round(255 * intensity);
+  const alpha = Math.max(0.1, Math.min(1, calib.brightness / 100));
+  return rgbToCss(0, 0, b, alpha);
+}
+
+function currentEye2Color(){
+  const intensity = calib.eye2Gain / 100;
+  const r = Math.round(35 * intensity);
+  const alpha = Math.max(0.1, Math.min(1, calib.brightness / 100));
+  return rgbToCss(r, 0, 0, alpha);
+}
   const NEUTRAL_GRID = "#ffffff";
 
   /* ============================================================
