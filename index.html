@@ -42,7 +42,7 @@
 
   /* ---------- MENU ---------- */
   .menu-wrap{
-    display:flex; flex-direction:column; align-items:center; gap:48px;
+    display:flex; flex-direction:column; align-items:center; gap:clamp(18px,4.5vh,40px);
   }
   .menu-title{
     text-align:center;
@@ -311,6 +311,166 @@
     .side-panel{width:min(300px,92vw); flex-direction:row; flex-wrap:wrap;}
     .side-panel .panel-card{flex:1 1 42%;}
   }
+  /* ---------- PROGRESSO / JORNADA ---------- */
+  :root{
+    --gold:#ffcf5a;
+    --gold-deep:#ff9f43;
+    --mint:#5cd8a4;
+  }
+  .unlock-banner{
+    max-width:min(340px,86vw);
+    text-align:center;
+    padding:10px 14px;
+    border-radius:10px;
+    border:1px solid rgba(255,207,90,0.45);
+    background:rgba(255,207,90,0.08);
+    color:var(--gold);
+    font-size:13px;
+    line-height:1.4;
+  }
+  .unlock-banner[hidden]{display:none;}
+  .menu-stats{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:6px 16px;
+    max-width:min(420px,90vw);
+    color:var(--text-dim);
+    font-size:12px;
+  }
+  .menu-stats b{color:var(--text-primary); font-weight:600;}
+
+  .panel-row{display:flex; gap:10px;}
+  .panel-row .panel-card{flex:1; min-width:0; padding:10px 12px;}
+  .val-sm{font-size:16px !important;}
+  .goal-bar{
+    height:6px; border-radius:3px;
+    background:var(--line-hair);
+    margin-top:8px; overflow:hidden;
+  }
+  /* Neutral bar inside the game screen so it does not favour either eye. */
+  .goal-bar span{
+    display:block; height:100%; width:0%;
+    background:#cfd8e3;
+    transition:width .4s ease;
+  }
+  .goal-note{margin-top:6px; font-size:11px; color:var(--text-dim);}
+
+  .go-record{margin:-4px 0 10px; font-size:14px; font-weight:700; color:var(--gold);}
+  .go-unlock{margin:0 0 10px; font-size:13px; color:var(--mint);}
+  .go-quote{margin:0 0 16px; font-size:12px; font-style:italic; color:var(--text-dim); line-height:1.45;}
+  .go-record:empty,.go-unlock:empty,.go-quote:empty{display:none;}
+
+  .journey-panel{
+    width:min(720px,94vw);
+    max-height:94vh;
+    overflow-y:auto;
+    background:var(--bg-panel);
+    border:1px solid var(--line-hair);
+    border-radius:16px;
+    padding:clamp(18px,4vw,32px);
+  }
+  .journey-panel h2{
+    margin:0 0 6px;
+    font-size:clamp(22px,4vw,28px);
+    background:linear-gradient(90deg,var(--gold),var(--gold-deep));
+    -webkit-background-clip:text; background-clip:text;
+    color:transparent;
+  }
+  .journey-quote{
+    margin:0 0 20px;
+    color:var(--text-dim);
+    font-size:14px; font-style:italic; line-height:1.5;
+  }
+  .journey-stats{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
+  }
+  .jstat{
+    background:var(--bg-panel-raised);
+    border:1px solid var(--line-hair);
+    border-radius:10px;
+    padding:12px 8px;
+    text-align:center;
+  }
+  .jstat-val{display:block; font-size:18px; font-weight:700; font-variant-numeric:tabular-nums;}
+  .jstat-lbl{display:block; margin-top:3px; font-size:11px; color:var(--text-dim);}
+  .journey-next{
+    margin-top:14px;
+    padding:14px 16px;
+    border-radius:12px;
+    border:1px solid rgba(95,208,255,0.4);
+    background:rgba(95,208,255,0.06);
+  }
+  .jnext-title{font-size:14px; font-weight:600; margin-bottom:10px;}
+  .jbar{height:10px; border-radius:5px; background:var(--line-hair); overflow:hidden;}
+  .jbar span{
+    display:block; height:100%;
+    background:linear-gradient(90deg,var(--focus-ring),var(--mint));
+    border-radius:5px;
+  }
+  .jnext-meta{margin-top:8px; font-size:12px; color:var(--text-dim);}
+
+  .journey-trail{margin-top:26px;}
+  .jnode{position:relative; display:flex; gap:16px; padding-bottom:22px;}
+  .jnode.last{padding-bottom:0;}
+  .jnode::before{
+    content:""; position:absolute;
+    left:20px; top:22px; height:100%; width:4px; border-radius:2px;
+    background:linear-gradient(to bottom,
+      var(--gold) 0, var(--gold) var(--seg),
+      var(--line-hair) var(--seg), var(--line-hair) 100%);
+  }
+  .jnode.last::before{display:none;}
+  .jmarker{
+    position:relative; z-index:1; flex:none;
+    width:44px; height:44px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px;
+    background:var(--bg-panel-raised);
+    border:3px solid var(--line-hair);
+  }
+  .jnode.done .jmarker{
+    background:linear-gradient(135deg,var(--gold),var(--gold-deep));
+    border-color:#ffe3a0;
+    box-shadow:0 0 14px rgba(255,191,80,0.35);
+  }
+  .jnode.current .jmarker{
+    border-color:var(--focus-ring);
+    animation:jpulse 1.8s ease-in-out infinite;
+  }
+  .jnode.locked .jmarker{filter:grayscale(1); opacity:0.55;}
+  @keyframes jpulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(95,208,255,0.55);}
+    50%{box-shadow:0 0 0 10px rgba(95,208,255,0);}
+  }
+  .jcard{
+    flex:1; min-width:0;
+    background:var(--bg-panel-raised);
+    border:1px solid var(--line-hair);
+    border-radius:12px;
+    padding:14px 16px;
+  }
+  .jnode.done .jcard{border-color:rgba(255,207,90,0.35);}
+  .jnode.current .jcard{border-color:var(--focus-ring); box-shadow:0 0 0 2px rgba(95,208,255,0.15);}
+  .jnode.locked .jcard{opacity:0.6;}
+  .jwhen{font-size:11px; letter-spacing:0.4px; color:var(--text-dim); font-weight:600;}
+  .jnode.done .jwhen{color:var(--gold);}
+  .jnode.current .jwhen{color:var(--focus-ring);}
+  .jcard h4{margin:4px 0 6px; font-size:16px;}
+  .jtext{margin:0; font-size:13px; line-height:1.55; color:#c3ccd6;}
+  .jcheer{margin:8px 0 0; font-size:12px; font-style:italic; color:var(--mint);}
+  .jcard .jbar{margin-top:12px;}
+  .jmeta{margin-top:6px; font-size:11px; color:var(--text-dim);}
+  .journey-note{
+    margin:22px 0 0;
+    font-size:11px; line-height:1.5; color:var(--text-dim); text-align:center;
+  }
+
+  @media (min-width:641px){
+    .side-panel{max-height:calc(100vh - 40px); overflow-y:auto; scrollbar-width:none;}
+    .side-panel::-webkit-scrollbar{display:none;}
+  }
+  @media (max-width:640px){
+    .panel-row{flex:1 1 100%;}
+    .journey-stats{grid-template-columns:repeat(2,1fr);}
+  }
 </style>
 </head>
 <body>
@@ -324,16 +484,22 @@
         <h1><span class="split-r">Tetris</span> <span class="split-c">Dicóptico</span></h1>
         <p>Treino de visão binocular com óculos anaglifos</p>
       </div>
+      <div class="unlock-banner" id="menu-banner" hidden></div>
       <div class="menu-buttons">
         <button class="menu-btn focused" data-action="start-game" id="btn-start">
           Iniciar Jogo
           <span class="btn-sub">Carrega suas cores salvas e começa a partida</span>
+        </button>
+        <button class="menu-btn" data-action="open-journey" id="btn-journey">
+          🗺️ Minha Jornada
+          <span class="btn-sub" id="journey-sub">Veja seu progresso e os próximos marcos</span>
         </button>
         <button class="menu-btn" data-action="open-calib" id="btn-calib">
           Calibrar Óculos
           <span class="btn-sub">Ajuste as cores para o seu par de lentes</span>
         </button>
       </div>
+      <div class="menu-stats" id="menu-stats"></div>
       <div class="gamepad-hint">
         <span class="pad-dot" id="menu-pad-dot"></span>
         <span id="menu-pad-text">Controle desconectado</span>
@@ -402,6 +568,35 @@
     </div>
   </div>
 
+  <!-- ============ JOURNEY SCREEN ============ -->
+  <div class="screen" id="screen-journey">
+    <div class="journey-panel" id="journey-panel">
+      <h2>🗺️ Jornada da Visão</h2>
+      <p class="journey-quote" id="journey-quote"></p>
+
+      <div class="journey-stats">
+        <div class="jstat"><span class="jstat-val" id="j-total">0 s</span><span class="jstat-lbl">terapia total</span></div>
+        <div class="jstat"><span class="jstat-val" id="j-streak">0 dias</span><span class="jstat-lbl">sequência (meta de 15 min)</span></div>
+        <div class="jstat"><span class="jstat-val" id="j-high">0</span><span class="jstat-lbl">recorde</span></div>
+        <div class="jstat"><span class="jstat-val" id="j-today">0 s</span><span class="jstat-lbl">hoje</span></div>
+      </div>
+
+      <div class="journey-next" id="journey-next"></div>
+
+      <div class="journey-trail" id="journey-trail"></div>
+
+      <p class="journey-note">
+        Os marcos descrevem experiências comumente relatadas e servem como guia de motivação:
+        cada pessoa evolui no seu próprio ritmo. Continue com o acompanhamento do seu oftalmologista.
+      </p>
+
+      <div class="calib-actions">
+        <button class="btn ghost" id="btn-export" data-action="export-progress">⬇ Exportar progresso</button>
+        <button class="btn primary focused" data-action="back-journey">Voltar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ GAME SCREEN ============ -->
   <div class="screen" id="screen-game">
     <div class="game-wrap">
@@ -412,16 +607,28 @@
           <div class="val" id="stat-score">0</div>
         </div>
         <div class="panel-card">
-          <h3>NÍVEL</h3>
-          <div class="val" id="stat-level">1</div>
+          <h3>RECORDE</h3>
+          <div class="val" id="stat-high">0</div>
         </div>
-        <div class="panel-card">
-          <h3>LINHAS</h3>
-          <div class="val" id="stat-lines">0</div>
+        <div class="panel-row">
+          <div class="panel-card">
+            <h3>NÍVEL</h3>
+            <div class="val" id="stat-level">1</div>
+          </div>
+          <div class="panel-card">
+            <h3>LINHAS</h3>
+            <div class="val" id="stat-lines">0</div>
+          </div>
         </div>
         <div class="panel-card">
           <h3>PRÓXIMA</h3>
           <canvas id="next-canvas" width="96" height="96"></canvas>
+        </div>
+        <div class="panel-card">
+          <h3>TERAPIA HOJE</h3>
+          <div class="val val-sm" id="stat-today">00:00 / 15:00</div>
+          <div class="goal-bar"><span id="bar-today"></span></div>
+          <div class="goal-note" id="note-today">Meta diária: 15 min</div>
         </div>
         <button class="icon-btn" id="btn-pause" data-action="pause-game">
           <span class="gear"></span> Pausar / Calibrar
@@ -453,6 +660,9 @@
   <div class="overlay-panel">
     <h2>Fim de Jogo</h2>
     <p style="color:var(--text-dim); margin-top:-10px; font-size:13px;" id="gameover-summary"></p>
+    <p class="go-record" id="gameover-record"></p>
+    <p class="go-unlock" id="gameover-unlock"></p>
+    <p class="go-quote" id="gameover-quote"></p>
     <div class="overlay-buttons">
       <button class="btn primary focused" data-action="restart-game">Jogar Novamente</button>
       <button class="btn ghost" data-action="quit-to-menu">Menu Principal</button>
@@ -512,6 +722,328 @@
   /* ============================================================
      GLOBAL STATE
      ============================================================ */
+  /* ============================================================
+     PROGRESSO DA TERAPIA — recorde, tempo de terapia e jornada
+     Chaves no localStorage (fáceis de inspecionar no DevTools):
+       dichopticTetris.highScore       -> recorde (número)
+       dichopticTetris.therapySeconds  -> tempo total jogado, em segundos
+       dichopticTetris.dailyLog        -> {"AAAA-MM-DD": segundos}
+     ============================================================ */
+  const LS_HIGH  = "dichopticTetris.highScore";
+  const LS_TIME  = "dichopticTetris.therapySeconds";
+  const LS_DAYS  = "dichopticTetris.dailyLog";
+  const LS_CELEB = "dichopticTetris.celebratedMilestone";
+  const DAILY_GOAL_SEC = 15 * 60;
+
+  // "min" = minutos ACUMULADOS de terapia necessários (15 min/dia => semana = 105 min).
+  const MILESTONES = [
+    { min:0,    when:"Ponto de partida", emoji:"🌱", title:"Linha de largada",
+      text:"Todo grande caminho começa com um primeiro passo. Seu cérebro está prestes a receber o convite para usar os dois olhos em equipe.",
+      cheer:"Você já fez a parte mais difícil: começar." },
+    { min:15,   when:"Dia 1", emoji:"🎮", title:"Primeiro contato",
+      text:"O cérebro estranha a novidade: é normal sentir um esforço extra ou um leve cansaço. É sinal de que o olho esquerdo está sendo chamado para participar.",
+      cheer:"Primeiro dia no bolso! 💪" },
+    { min:45,   when:"Dia 3", emoji:"🔥", title:"Aquecendo os motores",
+      text:"As peças ficam mais fáceis de acompanhar e a estranheza das cores diminui. Seu cérebro começa a pegar o ritmo do treino.",
+      cheer:"Três dias seguidos de dedicação. A rotina está nascendo." },
+    { min:105,  when:"Semana 1", emoji:"⭐", title:"Hábito nascendo",
+      text:"Uma semana completa de 15 minutos diários! A rotina começa a se firmar e o esforço mental para jogar tende a diminuir.",
+      cheer:"Sete dias cuidando da sua visão. Isso é consistência." },
+    { min:210,  when:"Semana 2", emoji:"🌗", title:"Contraste em alerta",
+      text:"Com duas semanas de treino, é comum começar a notar mais sensibilidade ao contraste: perceber melhor objetos em ambientes de pouca luz e bordas pouco nítidas.",
+      cheer:"Repare nos detalhes ao seu redor hoje. Seu cérebro está afinando o foco." },
+    { min:315,  when:"Semana 3", emoji:"🤝", title:"Olhos trabalhando juntos",
+      text:"O cérebro vai se acostumando a considerar a imagem do olho esquerdo em vez de ignorá-la. O jogo tende a ficar mais natural e menos cansativo.",
+      cheer:"Os dois olhos estão aprendendo a jogar no mesmo time." },
+    { min:420,  when:"Semana 4", emoji:"🏅", title:"1 mês de jornada",
+      text:"Um mês de dedicação! Pode ser que você perceba mais facilidade em tarefas de coordenação visual, como encaixar peças mais rápido e estimar distâncias.",
+      cheer:"Um mês inteiro. Muita gente desiste antes. Você não." },
+    { min:630,  when:"Semana 6", emoji:"🧠", title:"Visão em equipe",
+      text:"As conexões entre os dois olhos ficam mais fortes com a repetição. Leituras longas e telas podem parecer um pouco menos cansativas.",
+      cheer:"O cérebro adora repetição. Cada partida é uma aula." },
+    { min:840,  when:"Semana 8", emoji:"🚀", title:"Dois meses de força",
+      text:"Seu foco visual tende a ficar mais estável por mais tempo. Sua pontuação e seus níveis provavelmente já contam essa história: confira seu recorde!",
+      cheer:"Dois meses de evolução silenciosa, mas real." },
+    { min:1260, when:"Semana 12", emoji:"🏔️", title:"Três meses: o grande marco",
+      text:"Você construiu um hábito sólido. É um ótimo momento para marcar uma reavaliação com seu oftalmologista e comparar como estão sua acuidade e sua visão binocular.",
+      cheer:"Três meses! Olhe para trás e orgulhe-se do caminho." },
+    { min:1890, when:"Semana 18", emoji:"👑", title:"Treinador veterano",
+      text:"Meses de constância! Sua disciplina é, por si só, uma vitória. A prática contínua ajuda a consolidar o que o cérebro já aprendeu.",
+      cheer:"Você virou referência de persistência. Siga firme." },
+    { min:2730, when:"Semana 26", emoji:"🏆", title:"Meio ano de jornada",
+      text:"Seis meses cuidando da sua visão. Poucas pessoas têm essa persistência. Mantenha o treino de manutenção e comemore com quem te apoia.",
+      cheer:"Você chegou ao topo da trilha. Que orgulho! 🎉" }
+  ];
+
+  const QUOTES = [
+    "Pequenos 15 minutos por dia constroem grandes mudanças.",
+    "Seu cérebro é plástico: cada partida é uma aula.",
+    "Constância vale mais que intensidade.",
+    "Hoje é um bom dia para empilhar mais um tijolo da sua evolução.",
+    "Cada linha completada é uma pequena vitória do seu olho esquerdo.",
+    "Quem treina todo dia não precisa de sorte.",
+    "Devagar também é progresso. O importante é não parar.",
+    "Você não está só jogando: está treinando seu cérebro a enxergar melhor.",
+    "Dia difícil? Jogue só até a meta. Seu eu do futuro agradece.",
+    "Os dois olhos formam uma equipe, e você é o técnico.",
+    "Progresso é feito de dias comuns repetidos com vontade.",
+    "Orgulhe-se: tem gente que nunca começa. Você já está aí.",
+    "Um quadrado de cada vez. Uma linha de cada vez. Um dia de cada vez.",
+    "Foco, respiração e mais uma peça!"
+  ];
+
+  function pad2(n){ return (n < 10 ? "0" : "") + n; }
+  function dayKey(d){
+    d = d || new Date();
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+  function fmtClock(sec){
+    sec = Math.max(0, Math.floor(sec));
+    return pad2(Math.floor(sec / 60)) + ":" + pad2(sec % 60);
+  }
+  function fmtDuration(sec){
+    sec = Math.max(0, Math.floor(sec));
+    if(sec < 60) return sec + " s";
+    const totalMin = Math.floor(sec / 60);
+    if(totalMin < 60) return totalMin + " min";
+    return Math.floor(totalMin / 60) + "h " + pad2(totalMin % 60) + "min";
+  }
+  function dailyQuote(){
+    const d = new Date();
+    const n = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+    return QUOTES[n % QUOTES.length];
+  }
+  function randomQuote(){
+    return QUOTES[Math.floor(Math.random() * QUOTES.length)];
+  }
+
+  const Progress = (function(){
+    let _high = 0, _seconds = 0, _days = {}, _celebrated = 0;
+    let dirty = false, lastSaveAt = 0;
+
+    function readNumber(key){
+      try{
+        const v = parseFloat(localStorage.getItem(key));
+        return (isFinite(v) && v > 0) ? v : 0;
+      }catch(e){ return 0; }
+    }
+
+    function load(){
+      _high = Math.floor(readNumber(LS_HIGH));
+      _seconds = readNumber(LS_TIME);
+      _days = {};
+      try{
+        const raw = localStorage.getItem(LS_DAYS);
+        if(raw){
+          const parsed = JSON.parse(raw);
+          if(parsed && typeof parsed === "object"){
+            Object.keys(parsed).forEach(function(k){
+              const v = Number(parsed[k]);
+              if(isFinite(v) && v > 0) _days[k] = v;
+            });
+          }
+        }
+      }catch(e){ _days = {}; }
+      try{
+        const c = parseInt(localStorage.getItem(LS_CELEB), 10);
+        _celebrated = isFinite(c) ? c : 0;
+      }catch(e){ _celebrated = 0; }
+    }
+
+    function save(){
+      if(!dirty) return;
+      try{
+        localStorage.setItem(LS_HIGH, String(_high));
+        localStorage.setItem(LS_TIME, String(Math.round(_seconds * 10) / 10));
+        localStorage.setItem(LS_DAYS, JSON.stringify(_days));
+        dirty = false;
+      }catch(e){}
+      lastSaveAt = performance.now();
+    }
+
+    // Soma apenas tempo de jogo ativo (o loop só chama isto sem pausa).
+    function addTime(dtMs){
+      if(!(dtMs > 0)) return;
+      const s = dtMs / 1000;
+      _seconds += s;
+      const k = dayKey();
+      _days[k] = (_days[k] || 0) + s;
+      dirty = true;
+      if(performance.now() - lastSaveAt > 5000) save();
+    }
+
+    function noteScore(score){
+      if(score > _high){ _high = score; dirty = true; return true; }
+      return false;
+    }
+
+    function streak(){
+      let n = 0;
+      const d = new Date();
+      if((_days[dayKey(d)] || 0) < DAILY_GOAL_SEC) d.setDate(d.getDate() - 1);
+      while((_days[dayKey(d)] || 0) >= DAILY_GOAL_SEC){
+        n++;
+        d.setDate(d.getDate() - 1);
+      }
+      return n;
+    }
+
+    function milestoneIndex(){
+      const m = _seconds / 60;
+      let idx = 0;
+      for(let i = 0; i < MILESTONES.length; i++){
+        if(m >= MILESTONES[i].min) idx = i;
+      }
+      return idx;
+    }
+
+    function pendingCelebration(){
+      const idx = milestoneIndex();
+      return idx > _celebrated ? MILESTONES[idx] : null;
+    }
+
+    function markCelebrated(){
+      _celebrated = milestoneIndex();
+      try{ localStorage.setItem(LS_CELEB, String(_celebrated)); }catch(e){}
+    }
+
+    load();
+
+    function snapshot(){
+      save();
+      return {
+        app: "dichopticTetris",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        highScore: _high,
+        therapySeconds: Math.round(_seconds * 10) / 10,
+        dailyLog: _days,
+        celebratedMilestone: _celebrated
+      };
+    }
+
+    return {
+      snapshot: snapshot,
+      addTime: addTime, save: save, noteScore: noteScore,
+      high: function(){ return _high; },
+      totalSeconds: function(){ return _seconds; },
+      todaySeconds: function(){ return _days[dayKey()] || 0; },
+      streak: streak, milestoneIndex: milestoneIndex,
+      pendingCelebration: pendingCelebration, markCelebrated: markCelebrated
+    };
+  })();
+
+  let hudLastSec = -1;
+  function refreshTherapyHud(force){
+    const today = Progress.todaySeconds();
+    const sec = Math.floor(today);
+    if(!force && sec === hudLastSec) return;
+    hudLastSec = sec;
+    document.getElementById("stat-today").textContent = fmtClock(today) + " / " + fmtClock(DAILY_GOAL_SEC);
+    document.getElementById("bar-today").style.width = Math.min(100, today / DAILY_GOAL_SEC * 100) + "%";
+    document.getElementById("note-today").textContent =
+      today >= DAILY_GOAL_SEC ? "✓ Meta de hoje concluída!" : "Meta diária: 15 min";
+  }
+
+  function refreshMenu(){
+    const total = Progress.totalSeconds();
+    const idx = Progress.milestoneIndex();
+    const st = Progress.streak();
+    document.getElementById("menu-stats").innerHTML =
+      "<span>⏱ Terapia: <b>" + fmtDuration(total) + "</b></span>" +
+      "<span>🏆 Recorde: <b>" + Progress.high() + "</b></span>" +
+      "<span>🔥 Sequência: <b>" + st + (st === 1 ? " dia" : " dias") + "</b></span>";
+
+    const sub = document.getElementById("journey-sub");
+    if(idx < MILESTONES.length - 1){
+      const nx = MILESTONES[idx + 1];
+      sub.textContent = "Próximo marco: " + nx.title + " (faltam " + fmtDuration(nx.min * 60 - total) + ")";
+    } else {
+      sub.textContent = "Você chegou ao topo da trilha!";
+    }
+
+    const banner = document.getElementById("menu-banner");
+    const pend = Progress.pendingCelebration();
+    if(pend){
+      banner.textContent = "🎉 Marco desbloqueado: " + pend.title + "! Veja em Minha Jornada.";
+      banner.hidden = false;
+    } else {
+      banner.hidden = true;
+    }
+  }
+
+  function renderJourney(){
+    const total = Progress.totalSeconds();
+    const idx = Progress.milestoneIndex();
+    const minutes = total / 60;
+    const lastIdx = MILESTONES.length - 1;
+
+    document.getElementById("j-total").textContent = fmtDuration(total);
+    const st = Progress.streak();
+    document.getElementById("j-streak").textContent = "🔥 " + st + (st === 1 ? " dia" : " dias");
+    document.getElementById("j-high").textContent = Progress.high();
+    document.getElementById("j-today").textContent = fmtDuration(Progress.todaySeconds());
+    document.getElementById("journey-quote").textContent = "“" + dailyQuote() + "”";
+
+    const nextBox = document.getElementById("journey-next");
+    if(idx < lastIdx){
+      const nx = MILESTONES[idx + 1];
+      const span = nx.min - MILESTONES[idx].min;
+      const pct = Math.max(0, Math.min(100, (minutes - MILESTONES[idx].min) / span * 100));
+      nextBox.innerHTML =
+        '<div class="jnext-title">Próximo marco: ' + nx.emoji + " " + nx.title + "</div>" +
+        '<div class="jbar"><span style="width:' + pct.toFixed(1) + '%"></span></div>' +
+        '<div class="jnext-meta">Faltam ' + fmtDuration(nx.min * 60 - total) + " de terapia (" + Math.round(pct) + "% do caminho)</div>";
+    } else {
+      nextBox.innerHTML =
+        '<div class="jnext-title">🏆 Você chegou ao topo da trilha!</div>' +
+        '<div class="jnext-meta">Continue treinando para manter as conquistas.</div>';
+    }
+
+    let html = "";
+    MILESTONES.forEach(function(m, i){
+      const state = i < idx ? "done" : (i === idx ? "current" : "locked");
+      let fill = 0;
+      if(i < idx) fill = 100;
+      else if(i === idx && i < lastIdx){
+        const span = MILESTONES[i + 1].min - m.min;
+        fill = Math.max(0, Math.min(100, (minutes - m.min) / span * 100));
+      }
+      const marker = state === "locked" ? "🔒" : m.emoji;
+      const need = m.min === 0 ? "" : " · " + fmtDuration(m.min * 60) + " de terapia";
+      html += '<div class="jnode ' + state + (i === lastIdx ? " last" : "") + '" style="--seg:' + fill.toFixed(1) + '%">' +
+        '<div class="jmarker">' + marker + "</div>" +
+        '<div class="jcard">' +
+          '<div class="jwhen">' + m.when.toUpperCase() + need + "</div>" +
+          "<h4>" + m.title + "</h4>" +
+          '<p class="jtext">' + m.text + "</p>" +
+          (state !== "locked" ? '<p class="jcheer">“' + m.cheer + "”</p>" : "") +
+          (state === "current" && i < lastIdx
+            ? '<div class="jbar"><span style="width:' + fill.toFixed(1) + '%"></span></div>' +
+              '<div class="jmeta">Você está aqui. Continue jogando para chegar ao próximo marco.</div>'
+            : "") +
+        "</div></div>";
+    });
+    document.getElementById("journey-trail").innerHTML = html;
+  }
+
+  function exportProgress(){
+    const data = Progress.snapshot();
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "tetris-terapia-progresso-" + dayKey() + ".json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+
+    const btn = document.getElementById("btn-export");
+    btn.textContent = "✓ Arquivo gerado";
+    setTimeout(function(){ btn.textContent = "⬇ Exportar progresso"; }, 2500);
+  }
+
   let calib = loadCalibration();
   let activeCalibContext = "menu"; // "menu" | "pause" — where "back" should return to
 
@@ -538,6 +1070,7 @@ function currentEye2Color(){
   const screens = {
     menu: document.getElementById("screen-menu"),
     calib: document.getElementById("screen-calib"),
+    journey: document.getElementById("screen-journey"),
     game: document.getElementById("screen-game")
   };
   function showScreen(name){
@@ -591,6 +1124,22 @@ function currentEye2Color(){
 
   function handleAction(action){
     switch(action){
+      case "open-journey": {
+        renderJourney();
+        Progress.markCelebrated();
+        showScreen("journey");
+        const cur = document.querySelector("#journey-trail .jnode.current");
+        if(cur) cur.scrollIntoView({block:"center"});
+        break;
+      }
+      case "export-progress":
+        exportProgress();
+        break;
+      case "back-journey":
+        showScreen("menu");
+        refreshMenu();
+        focusFirst(screens.menu);
+        break;
       case "start-game":
         calib = loadCalibration();
         showScreen("game");
@@ -631,6 +1180,7 @@ function currentEye2Color(){
         setOverlay(overlayGameOver, false);
         Game.stop();
         showScreen("menu");
+        refreshMenu();
         focusFirst(screens.menu);
         break;
       case "restart-game":
@@ -735,8 +1285,20 @@ function currentEye2Color(){
     return res;
   }
 
+  // Sorteio "7-bag": cada saco contém as 7 peças embaralhadas e é consumido
+  // por inteiro antes de um novo ser criado. Garante distribuição equilibrada
+  // (sem longas secas de uma peça nem sequências repetidas demais).
+  let pieceBag = [];
+  function resetBag(){ pieceBag = []; }
   function randomPieceKey(){
-    return PIECE_KEYS[Math.floor(Math.random()*PIECE_KEYS.length)];
+    if(pieceBag.length === 0){
+      pieceBag = PIECE_KEYS.slice();
+      for(let i = pieceBag.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = pieceBag[i]; pieceBag[i] = pieceBag[j]; pieceBag[j] = tmp;
+      }
+    }
+    return pieceBag.pop();
   }
 
   function makePiece(key){
@@ -764,6 +1326,7 @@ function currentEye2Color(){
     let lastTime = 0;
     let rafId = null;
     let cellSize = CELL;
+    let newRecordThisRun = false;
 
     function init(){
       canvas = document.getElementById("board-canvas");
@@ -790,6 +1353,8 @@ function currentEye2Color(){
     }
 
     function start(){
+      resetBag();
+      newRecordThisRun = false;
       board = emptyBoard();
       score = 0; level = 1; lines = 0;
       dropInterval = 1000;
@@ -800,6 +1365,7 @@ function currentEye2Color(){
       updateStats();
       running = true; paused = false;
       resizeCanvas();
+      refreshTherapyHud(true);
       if(rafId) cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(loop);
     }
@@ -808,9 +1374,10 @@ function currentEye2Color(){
       running = false; paused = false;
       if(rafId) cancelAnimationFrame(rafId);
       rafId = null;
+      Progress.save();
     }
 
-    function pause(){ paused = true; }
+    function pause(){ paused = true; Progress.save(); }
     function resume(){
       if(!running) return;
       paused = false;
@@ -929,6 +1496,8 @@ function currentEye2Color(){
     }
 
     function updateStats(){
+      if(Progress.noteScore(score)) newRecordThisRun = true;
+      document.getElementById("stat-high").textContent = Progress.high();
       document.getElementById("stat-score").textContent = score;
       document.getElementById("stat-level").textContent = level;
       document.getElementById("stat-lines").textContent = lines;
@@ -938,6 +1507,14 @@ function currentEye2Color(){
       stop();
       document.getElementById("gameover-summary").textContent =
         "Pontuação: " + score + " · Nível: " + level + " · Linhas: " + lines;
+      document.getElementById("gameover-record").textContent = newRecordThisRun
+        ? "🏆 Novo recorde: " + score + "!"
+        : "Recorde: " + Progress.high();
+      const pend = Progress.pendingCelebration();
+      document.getElementById("gameover-unlock").textContent = pend
+        ? "🎉 Marco desbloqueado: " + pend.title + "!"
+        : "Hoje: " + fmtClock(Progress.todaySeconds()) + " de terapia";
+      document.getElementById("gameover-quote").textContent = "“" + randomQuote() + "”";
       setOverlay(document.getElementById("overlay-gameover"), true);
       focusFirst(document.getElementById("overlay-gameover").querySelector(".overlay-panel"));
     }
@@ -1006,6 +1583,10 @@ function currentEye2Color(){
       const dt = ts - lastTime;
       lastTime = ts;
 
+      // Tempo de terapia: só conta enquanto o jogo está rodando (sem pausa).
+      Progress.addTime(Math.min(dt, 250));
+      refreshTherapyHud(false);
+
       dropTimer += dt;
       if(dropTimer >= dropInterval){
         dropTimer = 0;
@@ -1048,6 +1629,22 @@ function currentEye2Color(){
           focusFirst(overlayPause.querySelector(".overlay-panel"));
           ev.preventDefault();
           return;
+      }
+      return;
+    }
+
+    // journey screen: arrows scroll, Enter / Esc go back
+    if(screens.journey.classList.contains("active")){
+      const jp = document.getElementById("journey-panel");
+      switch(ev.key){
+        case "ArrowDown": jp.scrollTop += 80; ev.preventDefault(); return;
+        case "ArrowUp": jp.scrollTop -= 80; ev.preventDefault(); return;
+        case "e": case "E":
+          if(!ev.repeat) handleAction("export-progress");
+          ev.preventDefault(); return;
+        case "Enter": case "Escape":
+          if(!ev.repeat) handleAction("back-journey");
+          ev.preventDefault(); return;
       }
       return;
     }
@@ -1168,6 +1765,7 @@ function currentEye2Color(){
       const overlayGameOverOpen = overlayGameOver.classList.contains("active");
       const onGamePlaying = screens.game.classList.contains("active") && !overlayPauseOpen && !overlayGameOverOpen && Game.isRunning();
       const onCalib = screens.calib.classList.contains("active");
+      const onJourney = screens.journey.classList.contains("active");
 
       if(onGamePlaying){
         if(dpadLeft && ready("left")) Game.move(-1);
@@ -1177,6 +1775,12 @@ function currentEye2Color(){
         if(startPressed){
           handleAction("pause-game");
         }
+      } else if(onJourney){
+        const jp = document.getElementById("journey-panel");
+        if(dpadDown) jp.scrollTop += 14;
+        if(dpadUp) jp.scrollTop -= 14;
+        if(justPressed(pad, 2)) handleAction("export-progress");
+        if(confirmPressed || backPressed) handleAction("back-journey");
       } else if(onCalib){
         const container = currentInteractiveContainer();
         if(container){
@@ -1229,8 +1833,23 @@ function currentEye2Color(){
      ============================================================ */
   Game.init();
   populateCalibForm();
+  refreshMenu();
   focusFirst(screens.menu);
   GamepadInput.start();
+
+  // Aba oculta = jogo pausado automaticamente (não conta como terapia) e progresso salvo.
+  document.addEventListener("visibilitychange", function(){
+    if(document.hidden){
+      if(Game.isRunning()){
+        Game.pause();
+        setOverlay(overlayPause, true);
+        focusFirst(overlayPause.querySelector(".overlay-panel"));
+      }
+      Progress.save();
+    }
+  });
+  window.addEventListener("pagehide", function(){ Progress.save(); });
+  window.addEventListener("beforeunload", function(){ Progress.save(); });
 
 })();
 </script>
